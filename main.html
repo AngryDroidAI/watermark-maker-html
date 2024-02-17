@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watermark Photos</title>
+<style>
+  body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: auto; /* Enable scrolling */
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1440 810"%3E%3Cg fill-opacity=".2"%3E%3Cpath fill="%2300ff00" d="M0 160l60 10c60 10 180 30 300 20s240-70 420-80 360 70 480 40 240-70 360-40 240 80 360 60 240-60 360-30 180 40 300 10l60-10v640H0z"/%3E%3C/g%3E%3C/svg%3E');
+    background-size: cover;
+    animation: matrix-animation 20s linear infinite; /* Matrix animation */
+  }
+
+  @keyframes matrix-animation {
+    from { background-position: 0 0; }
+    to { background-position: 100% 100%; }
+  }
+
+  .container {
+    position: relative;
+    display: inline-block;
+    margin: auto;
+    text-align: center;
+    padding-top: 50px;
+  }
+
+  #dropArea {
+    border: 2px dashed #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    box-sizing: border-box;
+    border: 1px solid #fff;
+    border-radius: 5px;
+    background-color: transparent;
+    color: #fff;
+  }
+
+  button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    background-color: #ff69b4; /* Hot pink */
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  button:hover {
+    background-color: #ff1493; /* Deep pink */
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 20px;
+    border: 1px solid #fff;
+    border-radius: 5px;
+  }
+
+  #downloadBtn {
+    padding: 10px 20px;
+    background-color: #4682b4; /* Steel blue */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  #downloadBtn:hover {
+    background-color: #4169e1; /* Royal blue */
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2 style="color: #ff69b4;">Watermark Photos</h2>
+  <div id="dropArea">Drag & Drop Photos Here</div>
+  <input type="text" id="watermarkText" placeholder="Enter watermark text" value="MM">
+  <button onclick="addWatermark()">Add Watermark</button>
+  <button id="downloadBtn" onclick="downloadWatermarkedImage()">Download Watermarked Image</button>
+  <img id="watermarkedImage" src="#" alt="Watermarked Image" style="display: none;">
+</div>
+
+<script>
+  // Prevent default behaviors
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    document.getElementById('dropArea').addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+  });
+
+  // Highlight drop area when dragging over it
+  ['dragenter', 'dragover'].forEach(eventName => {
+    document.getElementById('dropArea').addEventListener(eventName, highlight, false);
+  });
+
+  // Unhighlight drop area when dragging out of it
+  ['dragleave', 'drop'].forEach(eventName => {
+    document.getElementById('dropArea').addEventListener(eventName, unhighlight, false);
+  });
+
+  // Handle dropped files
+  document.getElementById('dropArea').addEventListener('drop', handleDrop, false);
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function highlight() {
+    document.getElementById('dropArea').classList.add('highlight');
+  }
+
+  function unhighlight() {
+    document.getElementById('dropArea').classList.remove('highlight');
+  }
+
+  function handleDrop(e) {
+    var dt = e.dataTransfer;
+    var files = dt.files;
+
+    handleFiles(files);
+  }
+
+  function handleFiles(files) {
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        var img = new Image();
+        img.src = event.target.result;
+        document.getElementById('dropArea').appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function addWatermark() {
+    var watermarkText = document.getElementById('watermarkText').value.toUpperCase(); // Ensure text is in uppercase
+    var images = document.getElementById('dropArea').querySelectorAll('img');
+    if (images.length === 0) {
+      alert('Please upload an image first.');
+      return;
+    }
+
+    for (var i = 0; i < images.length; i++) {
+      var img = images[i];
+      var canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.font = '30px Arial';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.fillText(watermarkText, canvas.width - 100, canvas.height - 50);
+      var watermarkedImage = document.createElement('img');
+      watermarkedImage.src = canvas.toDataURL();
+      watermarkedImage.style.display = 'block';
+      document.getElementById('watermarkedImage').src = canvas.toDataURL(); // Set watermarked image source
+      document.getElementById('watermarkedImage').style.display = 'block'; // Show watermarked image
+    }
+  }
+
+  function downloadWatermarkedImage() {
+    var watermarkedImageSrc = document.getElementById('watermarkedImage').src;
+    var downloadLink = document.createElement('a');
+    downloadLink.href = watermarkedImageSrc;
+    downloadLink.download = 'watermarked_image.png';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+</script>
+
+</body>
+</html>
